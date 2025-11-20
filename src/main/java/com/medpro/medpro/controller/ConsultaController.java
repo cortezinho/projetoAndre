@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.medpro.medpro.model.dto.DadosAgendamentoConsulta;
+import com.medpro.medpro.model.dto.DadosCancelamentoConsulta;
 import com.medpro.medpro.model.dto.DadosListagemConsulta;
 import com.medpro.medpro.model.entity.Consulta;
 import com.medpro.medpro.repository.ConsultaRepository;
@@ -48,5 +50,12 @@ public class ConsultaController {
 
         // Passo 3: Retorna a resposta tipada corretamente
         return ResponseEntity.ok(page);
+    }
+
+    @DeleteMapping
+    @Transactional
+    public ResponseEntity cancelar(@RequestBody @Valid DadosCancelamentoConsulta dados) {
+        agenda.cancelar(dados);
+        return ResponseEntity.noContent().build();
     }
 }
