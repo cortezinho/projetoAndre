@@ -13,11 +13,10 @@ public class ValidadorMedicoComOutraConsultaNoMesmoHorario implements ValidadorA
     private ConsultaRepository repository;
 
     public void validar(DadosAgendamentoConsulta dados) {
-        // Calcula o intervalo de conflito (1h antes e 1h depois)
+
         var horarioInicioConflict = dados.data().minusHours(1);
         var horarioFimConflict = dados.data().plusHours(1);
 
-        // CORREÇÃO AQUI: Use o novo método "...Conflict" em vez do antigo
         var medicoPossuiOutraConsultaNoMesmoHorario = repository.existsByMedicoIdAndDataConflict(
                 dados.idMedico(),
                 horarioInicioConflict,

@@ -43,7 +43,6 @@ public class AgendaDeConsultas {
             throw new ValidacaoException("Id do médico informado não existe!");
         }
 
-        // Valida todas as regras de agendamento
         validadores.forEach(v -> v.validar(dados));
 
         var paciente = pacienteRepository.getReferenceById(dados.idPaciente());
@@ -53,8 +52,6 @@ public class AgendaDeConsultas {
             throw new ValidacaoException("Não existe médico disponível nessa data!");
         }
 
-        // --- CORREÇÃO AQUI ---
-        // Adicionamos 'null' no final para preencher o campo 'motivoCancelamento'
         var consulta = new Consulta(null, medico, paciente, dados.data(), null);
         consultaRepository.save(consulta);
 

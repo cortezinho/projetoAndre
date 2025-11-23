@@ -42,13 +42,8 @@ public class ConsultaController {
     @GetMapping
     public ResponseEntity<Page<DadosListagemConsulta>> listar(
             @PageableDefault(size = 10, sort = { "data" }) Pageable paginacao) {
-        // Passo 1: Busca a página de Entidades (Consulta)
         Page<Consulta> consultas = consultaRepository.findAll(paginacao);
-
-        // Passo 2: Converte para página de DTOs (DadosListagemConsulta)
         Page<DadosListagemConsulta> page = consultas.map(DadosListagemConsulta::new);
-
-        // Passo 3: Retorna a resposta tipada corretamente
         return ResponseEntity.ok(page);
     }
 
