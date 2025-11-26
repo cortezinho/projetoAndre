@@ -1,4 +1,4 @@
-package com.medpro.medpro.model.enums;
+package com.medpro.medpro.enums;
 
 public enum MotivoCancelamento {
     PACIENTE_DESISTIU,

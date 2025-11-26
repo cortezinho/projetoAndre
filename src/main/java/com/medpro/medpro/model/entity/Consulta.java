@@ -2,7 +2,7 @@ package com.medpro.medpro.model.entity;
 
 import java.time.LocalDateTime;
 
-import com.medpro.medpro.model.enums.MotivoCancelamento;
+import com.medpro.medpro.enums.MotivoCancelamento;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
