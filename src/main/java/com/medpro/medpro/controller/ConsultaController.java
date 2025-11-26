@@ -1,42 +1,92 @@
 package com.medpro.medpro.controller;
 
+import com.medpro.medpro.domain.validacoes.ValidadorAgendamentoDeConsulta;
+import com.medpro.medpro.domain.validacoes.cancelamento.ValidadorCancelamentoDeConsulta;
+import com.medpro.medpro.infra.execption.ValidacaoException;
+import com.medpro.medpro.model.dto.*;
+import com.medpro.medpro.model.entity.Consulta;
+import com.medpro.medpro.model.entity.Medico;
+import com.medpro.medpro.repository.ConsultaRepository;
+import com.medpro.medpro.repository.MedicoRepository;
+import com.medpro.medpro.repository.PacienteRepository;
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.medpro.medpro.model.dto.DadosAgendamentoConsulta;
-import com.medpro.medpro.model.dto.DadosCancelamentoConsulta;
-import com.medpro.medpro.model.dto.DadosListagemConsulta;
-import com.medpro.medpro.model.entity.Consulta;
-import com.medpro.medpro.repository.ConsultaRepository;
-import com.medpro.medpro.service.AgendaDeConsultas;
-
-import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("consultas")
 public class ConsultaController {
 
-    @Autowired
-    private AgendaDeConsultas agenda;
-
+    // Em vez de injetar 'AgendaDeConsultas', injetamos tudo o que ela usava
     @Autowired
     private ConsultaRepository consultaRepository;
+
+    @Autowired
+    private MedicoRepository medicoRepository;
+
+    @Autowired
+    private PacienteRepository pacienteRepository;
+
+    @Autowired
+    private List<ValidadorAgendamentoDeConsulta> validadores; // Lista de validadores
+
+    @Autowired
+    private List<ValidadorCancelamentoDeConsulta> validadoresCancelamento;
 
     @PostMapping
     @Transactional
     public ResponseEntity detalhar(@RequestBody @Valid DadosAgendamentoConsulta dados) {
-        var dto = agenda.agendar(dados);
+        // --- LÓGICA QUE ESTAVA NO SERVICE (AgendaDeConsultas) ---
+        
+        if (!pacienteRepository.existsById(dados.idPaciente())) {
+            throw new ValidacaoException("Id do paciente informado não existe!");
+        }
+
+        if (dados.idMedico() != null && !medicoRepository.existsById(dados.idMedico())) {
+            throw new ValidacaoException("Id do médico informado não existe!");
+        }
+
+        // Executa as validações
+        validadores.forEach(v -> v.validar(dados));
+
+        var paciente = pacienteRepository.getReferenceById(dados.idPaciente());
+        var medico = escolherMedico(dados); // Método privado auxiliar criado abaixo
+
+        if (medico == null) {
+            throw new ValidacaoException("Não existe médico disponível nessa data!");
+        }
+
+        var consulta = new Consulta(null, medico, paciente, dados.data(), null);
+        consultaRepository.save(consulta);
+        // ---------------------------------------------------------
+
+        var dto = new DadosDetalhamentoConsulta(consulta);
         return ResponseEntity.ok(dto);
+    }
+
+    @DeleteMapping
+    @Transactional
+    public ResponseEntity cancelar(@RequestBody @Valid DadosCancelamentoConsulta dados) {
+        // --- LÓGICA QUE ESTAVA NO SERVICE ---
+        if (!consultaRepository.existsById(dados.idConsulta())) {
+            throw new ValidacaoException("Id da consulta informado não existe!");
+        }
+
+        validadoresCancelamento.forEach(v -> v.validar(dados));
+
+        // Lógica de cancelamento (ou exclusão, conforme a sua preferência anterior)
+        var consulta = consultaRepository.getReferenceById(dados.idConsulta());
+        consulta.cancelar(dados.motivo()); 
+        // -------------------------------------
+
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
@@ -47,10 +97,16 @@ public class ConsultaController {
         return ResponseEntity.ok(page);
     }
 
-    @DeleteMapping
-    @Transactional
-    public ResponseEntity cancelar(@RequestBody @Valid DadosCancelamentoConsulta dados) {
-        agenda.cancelar(dados);
-        return ResponseEntity.noContent().build();
+    // Método auxiliar trazido do Service
+    private Medico escolherMedico(DadosAgendamentoConsulta dados) {
+        if (dados.idMedico() != null) {
+            return medicoRepository.getReferenceById(dados.idMedico());
+        }
+
+        if (dados.especialidade() == null) {
+            throw new ValidacaoException("Especialidade é obrigatória quando médico não for escolhido!");
+        }
+
+        return medicoRepository.escolherMedicoAleatorioLivreNaData(dados.especialidade(), dados.data());
     }
 }
