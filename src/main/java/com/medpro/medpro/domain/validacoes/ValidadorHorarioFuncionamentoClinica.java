@@ -12,14 +12,20 @@ public class ValidadorHorarioFuncionamentoClinica implements ValidadorAgendament
     public void validar(DadosAgendamentoConsulta dados) {
         var dataConsulta = dados.data();
         var hora = dataConsulta.getHour();
+        var minuto = dataConsulta.getMinute();
 
-        // Verifica se é antes das 07:00 ou depois das 18:00 (para fechar às 19:00)
-        // Se a consulta começar às 19:00, ela terminaria às 20:00, o que estaria fora do horário.
+        //Limita a marcação de consultas por horário
         if (hora < 7 || hora > 18) {
             throw new ValidacaoException("Consulta fora do horário de funcionamento da clínica (07:00 às 19:00)");
         }
+        //Limitação em minutos, evitando que consultas que ultrapassem às 19:00 sejam marcadas
+        if (hora == 18) {
+            if (minuto != 0){
+                throw new ValidacaoException("Consulta fora do horário de funcionamento da clínica (07:00 às 19:00)");
+            }
+        }
 
-        // Opcional: Se desejar bloquear também os domingos
+
         var domingo = dataConsulta.getDayOfWeek().equals(DayOfWeek.SUNDAY);
         if (domingo) {
             throw new ValidacaoException("A clínica não funciona aos domingos!");
