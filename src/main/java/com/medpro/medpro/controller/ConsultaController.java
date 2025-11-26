@@ -24,7 +24,6 @@ import java.util.List;
 @RequestMapping("consultas")
 public class ConsultaController {
 
-    // Em vez de injetar 'AgendaDeConsultas', injetamos tudo o que ela usava
     @Autowired
     private ConsultaRepository consultaRepository;
 
@@ -35,7 +34,7 @@ public class ConsultaController {
     private PacienteRepository pacienteRepository;
 
     @Autowired
-    private List<ValidadorAgendamentoDeConsulta> validadores; // Lista de validadores
+    private List<ValidadorAgendamentoDeConsulta> validadores;
 
     @Autowired
     private List<ValidadorCancelamentoDeConsulta> validadoresCancelamento;
@@ -43,7 +42,6 @@ public class ConsultaController {
     @PostMapping
     @Transactional
     public ResponseEntity detalhar(@RequestBody @Valid DadosAgendamentoConsulta dados) {
-        // --- LÓGICA QUE ESTAVA NO SERVICE (AgendaDeConsultas) ---
         
         if (!pacienteRepository.existsById(dados.idPaciente())) {
             throw new ValidacaoException("Id do paciente informado não existe!");
@@ -53,11 +51,11 @@ public class ConsultaController {
             throw new ValidacaoException("Id do médico informado não existe!");
         }
 
-        // Executa as validações
+        //Executa as validações
         validadores.forEach(v -> v.validar(dados));
 
         var paciente = pacienteRepository.getReferenceById(dados.idPaciente());
-        var medico = escolherMedico(dados); // Método privado auxiliar criado abaixo
+        var medico = escolherMedico(dados);
 
         if (medico == null) {
             throw new ValidacaoException("Não existe médico disponível nessa data!");
@@ -65,7 +63,6 @@ public class ConsultaController {
 
         var consulta = new Consulta(null, medico, paciente, dados.data(), null);
         consultaRepository.save(consulta);
-        // ---------------------------------------------------------
 
         var dto = new DadosDetalhamentoConsulta(consulta);
         return ResponseEntity.ok(dto);
@@ -73,18 +70,15 @@ public class ConsultaController {
 
     @DeleteMapping
     @Transactional
-    public ResponseEntity cancelar(@RequestBody @Valid DadosCancelamentoConsulta dados) {
-        // --- LÓGICA QUE ESTAVA NO SERVICE ---
+    public ResponseEntity<Void> cancelar(@RequestBody @Valid DadosCancelamentoConsulta dados) {
         if (!consultaRepository.existsById(dados.idConsulta())) {
             throw new ValidacaoException("Id da consulta informado não existe!");
         }
 
         validadoresCancelamento.forEach(v -> v.validar(dados));
 
-        // Lógica de cancelamento (ou exclusão, conforme a sua preferência anterior)
         var consulta = consultaRepository.getReferenceById(dados.idConsulta());
         consulta.cancelar(dados.motivo()); 
-        // -------------------------------------
 
         return ResponseEntity.noContent().build();
     }
@@ -97,7 +91,6 @@ public class ConsultaController {
         return ResponseEntity.ok(page);
     }
 
-    // Método auxiliar trazido do Service
     private Medico escolherMedico(DadosAgendamentoConsulta dados) {
         if (dados.idMedico() != null) {
             return medicoRepository.getReferenceById(dados.idMedico());

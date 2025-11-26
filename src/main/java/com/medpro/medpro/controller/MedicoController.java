@@ -55,7 +55,7 @@ public class MedicoController {
         return ResponseEntity.ok(new DadosDetalhamentoMedico(medico));
     }
 
-    @SuppressWarnings("null") // tira o warning do id
+    @SuppressWarnings("null") //tira o warning do id
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
