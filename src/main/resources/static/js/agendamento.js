@@ -58,30 +58,8 @@ async function carregarMedicosSelect() {
 // --- LISTAR CONSULTAS (TABELA DIREITA) ---
 async function listarConsultas() {
   try {
-    const response = await fetch(API_CONSULTAS);
-    const data = await response.json();
-    const tbody = document.querySelector("#tabelaConsultas tbody");
-    tbody.innerHTML = "";
-
-    if (data.content && data.content.length > 0) {
-      data.content.forEach((c) => {
-        const dataFormatada = new Date(c.data).toLocaleString("pt-BR");
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${c.id}</td><td>${c.medico}</td><td>${c.paciente}</td><td>${dataFormatada}</td>`;
-        tbody.appendChild(tr);
-      });
-    } else {
-      tbody.innerHTML =
-        '<tr><td colspan="4" style="text-align:center;">Nenhuma consulta agendada.</td></tr>';
-    }
-  } catch (error) {
-    console.error("Erro consultas:", error);
-  }
-}
-
-async function listarConsultas() {
-  try {
-    const response = await fetch("http://localhost:8089/consultas"); // Verifique se a URL está correta
+    // Correção: Usando a constante API_CONSULTAS
+    const response = await fetch(API_CONSULTAS); 
     const data = await response.json();
     const tbody = document.querySelector("#tabelaConsultas tbody");
     tbody.innerHTML = "";
@@ -92,7 +70,7 @@ async function listarConsultas() {
 
         // Verifica se tem motivo de cancelamento
         let statusTexto = "Agendada";
-        let classeCor = "status-ativo"; // Para usar no CSS se quiser
+        let classeCor = "status-ativo"; 
 
         if (c.motivoCancelamento) {
           statusTexto = `Cancelada: ${c.motivoCancelamento}`;
@@ -100,16 +78,16 @@ async function listarConsultas() {
         }
 
         const tr = document.createElement("tr");
-        // Adiciona uma classe na linha para estilizar (veja o CSS abaixo)
-        tr.classList.add(classeCor);
+        // Adiciona uma classe na linha para estilizar
+        if (classeCor) tr.classList.add(classeCor);
 
         tr.innerHTML = `
-                    <td>${c.id}</td>
-                    <td>${c.medico}</td>
-                    <td>${c.paciente}</td>
-                    <td>${dataFormatada}</td>
-                    <td>${statusTexto}</td>
-                `;
+            <td>${c.id}</td>
+            <td>${c.medico}</td>
+            <td>${c.paciente}</td>
+            <td>${dataFormatada}</td>
+            <td>${statusTexto}</td>
+        `;
         tbody.appendChild(tr);
       });
     } else {
@@ -132,7 +110,7 @@ document
     // Pega valor dos Selects
     const idPaciente = document.getElementById("selectPaciente").value;
     const idMedico = document.getElementById("selectMedico").value;
-    const especialidade = document.getElementById("especialidade").value;
+    // const especialidade = document.getElementById("especialidade").value; // Campo removido/comentado no HTML
     const dataHora = document.getElementById("data").value;
 
     if (!idPaciente) {
@@ -142,7 +120,7 @@ document
 
     const payload = { idPaciente: idPaciente, data: dataHora };
     if (idMedico) payload.idMedico = idMedico;
-    if (especialidade) payload.especialidade = especialidade;
+    // if (especialidade) payload.especialidade = especialidade;
 
     try {
       const response = await fetch(API_CONSULTAS, {

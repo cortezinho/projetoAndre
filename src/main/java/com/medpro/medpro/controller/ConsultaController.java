@@ -51,10 +51,7 @@ public class ConsultaController {
             throw new ValidacaoException("Id do médico informado não existe!");
         }
 
-<<<<<<< HEAD
-=======
-        //Executa as validações
->>>>>>> 159213704427ba4ce5d7d047d73087da12d7cdc8
+        // Executa as validações
         validadores.forEach(v -> v.validar(dados));
 
         var paciente = pacienteRepository.getReferenceById(dados.idPaciente());
@@ -73,25 +70,16 @@ public class ConsultaController {
 
     @DeleteMapping
     @Transactional
-<<<<<<< HEAD
-    public ResponseEntity cancelar(@RequestBody @Valid DadosCancelamentoConsulta dados) {
-=======
     public ResponseEntity<Void> cancelar(@RequestBody @Valid DadosCancelamentoConsulta dados) {
->>>>>>> 159213704427ba4ce5d7d047d73087da12d7cdc8
         if (!consultaRepository.existsById(dados.idConsulta())) {
             throw new ValidacaoException("Id da consulta informado não existe!");
         }
 
         validadoresCancelamento.forEach(v -> v.validar(dados));
-<<<<<<< HEAD
-        var consulta = consultaRepository.getReferenceById(dados.idConsulta());
-        consulta.cancelar(dados.motivo()); 
-=======
 
         var consulta = consultaRepository.getReferenceById(dados.idConsulta());
         consulta.cancelar(dados.motivo()); 
 
->>>>>>> 159213704427ba4ce5d7d047d73087da12d7cdc8
         return ResponseEntity.noContent().build();
     }
 
