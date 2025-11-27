@@ -58,8 +58,7 @@ async function carregarMedicosSelect() {
 // --- LISTAR CONSULTAS (TABELA DIREITA) ---
 async function listarConsultas() {
   try {
-    // Correção: Usando a constante API_CONSULTAS
-    const response = await fetch(API_CONSULTAS); 
+    const response = await fetch(API_CONSULTAS);
     const data = await response.json();
     const tbody = document.querySelector("#tabelaConsultas tbody");
     tbody.innerHTML = "";
@@ -70,7 +69,7 @@ async function listarConsultas() {
 
         // Verifica se tem motivo de cancelamento
         let statusTexto = "Agendada";
-        let classeCor = "status-ativo"; 
+        let classeCor = "status-ativo";
 
         if (c.motivoCancelamento) {
           statusTexto = `Cancelada: ${c.motivoCancelamento}`;
@@ -78,7 +77,6 @@ async function listarConsultas() {
         }
 
         const tr = document.createElement("tr");
-        // Adiciona uma classe na linha para estilizar
         if (classeCor) tr.classList.add(classeCor);
 
         tr.innerHTML = `
@@ -107,10 +105,8 @@ document
     const resultDiv = document.getElementById("resultAgendamento");
     resultDiv.style.display = "none";
 
-    // Pega valor dos Selects
     const idPaciente = document.getElementById("selectPaciente").value;
     const idMedico = document.getElementById("selectMedico").value;
-    // const especialidade = document.getElementById("especialidade").value; // Campo removido/comentado no HTML
     const dataHora = document.getElementById("data").value;
 
     if (!idPaciente) {
@@ -120,7 +116,6 @@ document
 
     const payload = { idPaciente: idPaciente, data: dataHora };
     if (idMedico) payload.idMedico = idMedico;
-    // if (especialidade) payload.especialidade = especialidade;
 
     try {
       const response = await fetch(API_CONSULTAS, {
@@ -129,7 +124,8 @@ document
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json().catch(() => ({}));
+      // Tenta ler o corpo da resposta como JSON
+      const data = await response.json().catch(() => null);
 
       if (response.ok) {
         resultDiv.className = "result success";
@@ -137,11 +133,24 @@ document
         resultDiv.style.display = "block";
         listarConsultas();
       } else {
-        throw new Error(data.message || "Erro ao agendar.");
+        // Lógica para extrair a mensagem de erro correta
+        let msg = "Erro ao agendar.";
+        
+        if (data) {
+          if (Array.isArray(data)) {
+            // Caso 1: Lista de erros de validação (ex: campos nulos)
+            msg = data.map(erro => `- ${erro.mensagem}`).join("<br>");
+          } else if (data.message) {
+            // Caso 2: Erro de negócio (ex: clínica fechada)
+            msg = data.message;
+          }
+        }
+        
+        throw new Error(msg);
       }
     } catch (error) {
       resultDiv.className = "result error";
-      resultDiv.innerText = error.message;
+      resultDiv.innerHTML = error.message; // Alterado de innerText para innerHTML para suportar quebras de linha (<br>)
       resultDiv.style.display = "block";
     }
   });
@@ -165,6 +174,8 @@ document
         body: JSON.stringify(payload),
       });
 
+      const data = await response.json().catch(() => null);
+
       if (response.status === 204) {
         resultDiv.className = "result success";
         resultDiv.innerText = "Consulta cancelada!";
@@ -172,7 +183,12 @@ document
         listarConsultas();
         document.getElementById("formCancelamento").reset();
       } else {
-        throw new Error("Erro ao cancelar.");
+        // Aplica a mesma lógica de erro para o cancelamento
+        let msg = "Erro ao cancelar.";
+        if (data && data.message) {
+             msg = data.message;
+        }
+        throw new Error(msg);
       }
     } catch (error) {
       resultDiv.className = "result error";

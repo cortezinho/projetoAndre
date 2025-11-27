@@ -19,20 +19,26 @@ public class TratadorDeErros {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<List<TratadorDeErros.DadosErroValidacao>> tratarErro404(MethodArgumentNotValidException e) {
+    public ResponseEntity<List<TratadorDeErros.DadosErroValidacao>> tratarErro400(MethodArgumentNotValidException e) {
         var erros = e.getFieldErrors();
         return ResponseEntity.badRequest().body(erros.stream().map(DadosErroValidacao::new).toList());
     }
 
+    // Record para erros de validação de campos (Bean Validation)
     private record DadosErroValidacao(String campo, String mensagem) {
         public DadosErroValidacao(FieldError erro) {
             this(erro.getField(), erro.getDefaultMessage());
         }
     }
 
+    // Alterado para retornar um JSON ao invés de String pura
     @ExceptionHandler(ValidacaoException.class)
-    public ResponseEntity tratarErroRegraDeNegocio(ValidacaoException ex) {
-        return ResponseEntity.badRequest().body(ex.getMessage());
+    public ResponseEntity<DadosErroGeral> tratarErroRegraDeNegocio(ValidacaoException ex) {
+        return ResponseEntity.badRequest().body(new DadosErroGeral(ex.getMessage()));
+    }
+
+    // Novo record para padronizar mensagens de erro de negócio
+    private record DadosErroGeral(String message) {
     }
 
 }
