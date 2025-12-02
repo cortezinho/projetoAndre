@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder; // Import necessário
 
 import java.util.List;
 
@@ -41,7 +42,7 @@ public class ConsultaController {
 
     @PostMapping
     @Transactional
-    public ResponseEntity detalhar(@RequestBody @Valid DadosAgendamentoConsulta dados) {
+    public ResponseEntity detalhar(@RequestBody @Valid DadosAgendamentoConsulta dados, UriComponentsBuilder uriBuilder) {
         
         if (!pacienteRepository.existsById(dados.idPaciente())) {
             throw new ValidacaoException("Id do paciente informado não existe!");
@@ -51,7 +52,6 @@ public class ConsultaController {
             throw new ValidacaoException("Id do médico informado não existe!");
         }
 
-        // Executa as validações
         validadores.forEach(v -> v.validar(dados));
 
         var paciente = pacienteRepository.getReferenceById(dados.idPaciente());
@@ -63,9 +63,9 @@ public class ConsultaController {
 
         var consulta = new Consulta(null, medico, paciente, dados.data(), null);
         consultaRepository.save(consulta);
-
         var dto = new DadosDetalhamentoConsulta(consulta);
-        return ResponseEntity.ok(dto);
+        var uri = uriBuilder.path("/consultas/{id}").buildAndExpand(consulta.getId()).toUri();
+        return ResponseEntity.created(uri).body(dto);
     }
 
     @DeleteMapping
@@ -79,7 +79,6 @@ public class ConsultaController {
 
         var consulta = consultaRepository.getReferenceById(dados.idConsulta());
         consulta.cancelar(dados.motivo()); 
-
         return ResponseEntity.noContent().build();
     }
 
